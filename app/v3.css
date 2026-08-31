@@ -1,0 +1,690 @@
+/* ============================================================
+   TOKENS - one cloth, one dyeing
+   Petal deep, read off the barkcloth photographs in content/cloth/. data-pal and
+   data-type are fixed in index.html and never toggled at runtime, so this is the
+   only palette/type combination that ever renders - no switcher to keep live.
+   ink 12.6:1, ink-2 7.7:1, ink-3 5.1:1, retreat 6.9:1, growth 7.1:1, people 5.1:1.
+   ============================================================ */
+:root{
+  --paper:      #f0efed;
+  --paper-2:    #EAE9E7;
+  --paper-3:    #D4C8B5;
+  --grid:       #F7F1E1;
+  --grid-strong:#A6B7A1; /* #A6B7A1 */
+  --rule:       #7E3F2D;
+  --grey:       #f3f3f4;
+
+  --ink:        #0F2C3D; 
+  --ink-2:      #2D4F56; 
+  --ink-3:      #4A6B62;
+
+  --loss:       #782a2e; /* #7E3F2D */
+  --loss-soft:  #7E3F2D33;
+  --loss-deep:  #43182f; /*# 4E2517 one step past --loss, for the "faster than 5 m a year" tier */
+  --gain:       #2D4F56; /* #2C5837 */
+  --gain-soft:  #2C583733;
+  --people:     #8A5A32; /* #8A5A32 */
+  --people-soft:#8A5A3233;
+  --land:       #D4C8B5;
+  --tape:       #D4C8B5cc;
+  --ink-3-soft: #4A6B6233;
+
+  --shadow:0 1px 2px #0F2C3D22, 0 10px 26px -16px #0F2C3D55;
+  --noise:.26;
+
+  --f-display:"Movement","Arial Black",sans-serif;
+  --f-hand:"Bricolage Grotesque","Arial Black",sans-serif;
+  --f-body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono","SFMono-Regular",Menlo,monospace;
+
+  --measure:64ch;
+  --gutter:clamp(1.1rem,4vw,3.2rem);
+}
+
+/* ============================================================
+   PAPER
+   ============================================================ */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background-color:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:16.5px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::before{ /* paper tooth */
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:var(--noise);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+
+.wrap{position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:0 var(--gutter)}
+
+/* ============================================================
+   TYPE
+   ============================================================ */
+h1,h2{font-family:var(--f-display);font-weight:700;line-height:1.06;text-wrap:balance;margin:0}
+h3{font-family:var(--f-hand);font-weight:700;line-height:1.06;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.5rem,7vw,4.9rem);letter-spacing:-.015em}
+h2{font-size:clamp(1.9rem,4.4vw,3.1rem);letter-spacing:-.01em}
+h3{font-size:clamp(1.12rem,2vw,1.4rem);font-weight:600}
+p{margin:0 0 1rem;max-width:var(--measure)}
+/* justified body copy, hyphenated so the rivers stay closed. Headings, labels and
+   anything set in the mono face keep their ragged edge. */
+p, figcaption, .small, .hotlist li, .popover p, .gsheet-wiki p{
+  text-align:justify;text-justify:inter-word;hyphens:auto;
+}
+h1,h2,h3,h4,.eyebrow,.stat .k,.legend,.kv,.sortbar,.palrow,
+.srclink,.mapbar,.choroscale,.popkey,.gsheet-sub,.gsheet-kind{
+  text-align:left;hyphens:manual;
+}
+a{color:inherit;text-underline-offset:3px;text-decoration-color:var(--loss)}
+strong{font-weight:600}
+.lede{font-size:clamp(1.06rem,1.7vw,1.28rem);color:var(--ink-2);max-width:60ch}
+.eyebrow{
+  font-family:var(--f-mono);font-size:.7rem;font-weight:500;
+  letter-spacing:.19em;text-transform:uppercase;color:var(--ink-3);
+  display:flex;align-items:center;gap:.7rem;margin-bottom:1.1rem;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--grid-strong);max-width:8rem}
+.hand{font-family:var(--f-hand);color:var(--ink-2)}
+/* a sentence the page wants read on its own - the same hand-set weight as an h3, held
+   off the body copy by one rust rule rather than a boxed callout */
+.pullquote{
+  margin:1.5rem 0 1.7rem;padding-left:1.2rem;border-left:3px solid var(--loss);
+  font-family:var(--f-hand);font-weight:600;color:var(--ink);
+  font-size:clamp(1.25rem,2.6vw,1.6rem);line-height:1.32;max-width:56ch;
+}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500}
+.loss{color:var(--loss)} .gain{color:var(--gain)} .ppl{color:var(--people)}
+.small{font-size:.83rem;color:var(--ink-2);line-height:1.5}
+
+/* ============================================================
+   THE OPENING
+   The barkcloth from app/img, cut into forty strips that slide on their own
+   phase - cloth in wind. The title is split per letter and swells with it.
+   ============================================================ */
+.hero{
+  position:relative;min-height:100svh;display:grid;
+  background:#4b2a1d;color:#F1EDE2;overflow:hidden;
+}
+.hero > *{grid-area:1/1}
+.hero-cloth{position:relative;overflow:hidden;background:#a8794b}
+.hero-cloth .strip{
+  position:absolute;left:-7%;width:114%;
+  height:calc(var(--sh) + 1.5px);
+  top:calc(var(--i) * var(--sh));
+  background-image:url("img/barkcloth.webp");
+  background-repeat:no-repeat;
+  background-size:var(--bw) var(--bh);
+  background-position:center calc(var(--oy) - var(--i) * var(--sh));
+  --amp:calc(3px + var(--i) * .3px);
+  animation:cloth-swell 7s ease-in-out infinite;
+  animation-delay:calc(var(--i) * -150ms);
+  will-change:transform;
+}
+@keyframes cloth-swell{
+  0%,100%{transform:translate3d(calc(var(--amp) * -1),0,0)}
+  50%    {transform:translate3d(var(--amp),0,0)}
+}
+.hero-scrim{
+  background:
+    linear-gradient(100deg,rgba(34,17,10,.92) 0%,rgba(34,17,10,.82) 34%,rgba(34,17,10,.34) 62%,rgba(34,17,10,.12) 100%),
+    linear-gradient(180deg,rgba(34,17,10,.55) 0%,rgba(34,17,10,.18) 40%,rgba(34,17,10,.8) 100%);
+}
+.hero-in{
+  position:relative;display:flex;flex-direction:column;justify-content:center;
+  max-width:1240px;width:100%;margin:0 auto;
+  padding:clamp(2rem,7vw,5rem) var(--gutter) 6rem;
+}
+.hero-in .eyebrow{color:#D8CBB6}
+.hero-in .eyebrow::after{background:#8a6a4e}
+.hero h1{
+  font-size:clamp(2.2rem,6.4vw,5.4rem);line-height:.98;
+  margin:.5rem 0 1.1rem;text-shadow:0 2px 30px rgba(30,14,8,.75);
+}
+.hero .lede{color:#EDE4D5;max-width:none;text-align:left;
+  text-shadow:0 1px 16px rgba(30,14,8,.8)}
+.hero-go{
+  align-self:flex-start;margin-top:2rem;text-decoration:none;
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+  color:#F1EDE2;border:1.2px solid #cbb08c;border-radius:2px;padding:.6rem 1.1rem;
+  transition:background .2s,color .2s;
+}
+.hero-go:hover{background:#F1EDE2;color:#4b2a1d}
+.hero-go:focus-visible{outline:2px solid #F1EDE2;outline-offset:3px}
+
+/* the letters ride the same swell as the cloth */
+.wavy{display:inline-block}
+.wavy .wd{display:inline-block;white-space:nowrap}
+.wavy .ch{display:inline-block;white-space:pre}
+@media (prefers-reduced-motion:reduce){
+  .hero-cloth .strip{animation:none;opacity:1;transform:none}
+}
+
+/* ============================================================
+   PAGE TABS
+   ============================================================ */
+.tabs{
+  position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:40;
+  display:flex;flex-direction:column;gap:.35rem;padding:.4rem;
+}
+.tabs button{
+  font-family:var(--f-mono);font-size:.7rem;font-weight:600;letter-spacing:.08em;
+  width:2.05rem;height:2.05rem;border-radius:2px 8px 8px 2px;cursor:pointer;
+  border:1.2px solid var(--grid-strong);background:var(--paper-2);color:var(--ink-3);
+  transition:color .2s,border-color .2s,transform .2s,background .2s;
+}
+.tabs button:hover{color:var(--ink);transform:translateX(3px)}
+.tabs button[aria-current="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tabs button:focus-visible{outline:2px solid var(--loss);outline-offset:2px}
+/* below 900px the vertical rail becomes a thumb-reachable bottom dock instead of
+   vanishing outright - a phone reader loses the rail shape but keeps section jumps */
+@media (max-width:900px){
+  .tabs{
+    left:50%;top:auto;bottom:.7rem;transform:translateX(-50%);
+    flex-direction:row;gap:.4rem;padding:.4rem;
+    background:color-mix(in srgb,var(--paper) 92%,transparent);
+    border:1.2px solid var(--grid-strong);border-radius:22px;
+    box-shadow:var(--shadow);backdrop-filter:blur(3px);
+  }
+  .tabs button{border-radius:50%;width:2.75rem;height:2.75rem}
+  .tabs button:hover{transform:none}
+}
+.tabs{transition:opacity .3s}
+html.hero-open .tabs{opacity:0;pointer-events:none}
+
+
+
+/* ============================================================
+   SPREADS
+   ============================================================ */
+section{padding:clamp(4rem,10vh,7.5rem) 0;position:relative}
+section + section{border-top:1.5px solid var(--grid-strong)}
+
+.cols{display:grid;gap:clamp(1.6rem,3.5vw,3rem);grid-template-columns:minmax(0,1fr)}
+@media (min-width:940px){
+  .cols.side{grid-template-columns:minmax(0,1fr) 20rem}
+}
+
+/* index card / taped note */
+.card{
+  background:var(--paper-2);border:1.2px solid var(--grid-strong);border-radius:5px;
+  padding:1.15rem 1.25rem;box-shadow:var(--shadow);position:relative;
+}
+/* the selvedge: the bound edge a length of barkcloth is finished with. The same wave
+   register the charts are painted with, carried as a mask so it takes the dye of
+   whichever palette is on - a data URI cannot interpolate a custom property. */
+.card::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:15px;
+  background:var(--loss);
+  -webkit-mask:var(--register) repeat-x left top/26px 15px;
+  mask:var(--register) repeat-x left top/26px 15px;
+  opacity:.9;
+}
+.card{padding-top:2rem}
+:root{
+  --register:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='15'%3E%3Cpath d='M0 3.5Q3.25 1 6.5 3.5T13 3.5T19.5 3.5T26 3.5' fill='none' stroke='%23000' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M0 7.5Q3.25 5 6.5 7.5T13 7.5T19.5 7.5T26 7.5' fill='none' stroke='%23000' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M0 11.5Q3.25 9 6.5 11.5T13 11.5T19.5 11.5T26 11.5' fill='none' stroke='%23000' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  
+}
+.card h3{margin-bottom:.5rem}
+.card p:last-child{margin-bottom:0}
+
+.stat{display:flex;flex-direction:column;gap:.15rem}
+.stat .v{font-family:var(--f-display);font-weight:700;font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1}
+.stat .k{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.statrow{display:grid;gap:1.4rem 2rem;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));margin:1.8rem 0}
+
+.hero-num{
+  font-family:var(--f-display);font-weight:600;line-height:.86;
+  font-size:clamp(3rem,17vw,10.5rem);color:var(--loss);letter-spacing:-.03em;
+  display:block;margin:.2rem 0 .1rem;
+}
+.hero-unit{font-size:.26em;color:var(--ink-2);letter-spacing:0}
+
+/* charts */
+.plot{width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.plot svg{display:block;width:100%;height:auto}
+.plot.mid svg{min-width:520px}
+.plot.wide svg{min-width:720px;max-width:none}
+figcaption{font-size:.8rem;color:var(--ink-2);margin-top:.7rem;max-width:70ch;line-height:1.5}
+/* a caption under a full-bleed chart still wants a readable column, not the chart's width */
+figcaption.onecol{max-width:none}
+/* a caption that belongs to the grid above it takes the grid's width, not the text measure */
+figcaption.gridwide{max-width:none;margin-top:1rem}
+/* a standfirst that introduces a full-width grid still wants one readable column */
+p.onecol{max-width:none}
+.lede.onecol{max-width:none}
+svg text{font-family:var(--f-mono);fill:var(--ink-2)}
+svg .lbl-hand{font-family:var(--f-hand);fill:var(--ink)}
+
+.legend{display:flex;flex-wrap:wrap;gap:.5rem 1.3rem;margin:.9rem 0 0;padding:0;list-style:none;max-width:none;
+  font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;color:var(--ink-2)}
+.legend li{display:flex;align-items:center;gap:.45rem}
+.swatch{width:.95rem;height:.95rem;border-radius:2px;border:1.2px solid currentColor;flex:none}
+.swatch.caveat-key{width:1.3rem;height:1.3rem;border-radius:50%;border-color:var(--ink-3);color:var(--ink-2);
+  background:var(--paper-2);display:grid;place-items:center;
+  font-family:var(--f-mono);font-size:.7rem;font-weight:600;line-height:1}
+#popChart .cav circle{transition:stroke .18s,fill .18s}
+#popChart .cav:hover circle{stroke:var(--loss);fill:var(--loss-soft)}
+#popChart .cav:focus-visible{outline:2px solid var(--loss);outline-offset:1px}
+
+/* ============================================================
+   HOTSPOT SHEETS
+   ============================================================ */
+.chip{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.05em;cursor:pointer;
+  padding:.4rem .72rem;border-radius:2px;
+  border:1.2px solid var(--grid-strong);background:var(--paper-2);color:var(--ink-2);
+  transition:background .18s,color .18s,border-color .18s,transform .18s;
+}
+.chip:hover{color:var(--ink);border-color:var(--ink-3);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--loss);outline-offset:2px}
+/* the retreat/growth toggle on p.04 carries the same two inks the tiles and legend do,
+   instead of the generic ink press every other chip uses */
+.chip[data-gdir="retreat"]{color:var(--loss);border-color:var(--loss)}
+.chip[data-gdir="retreat"][aria-pressed="true"]{background:var(--loss);color:var(--paper);border-color:var(--loss)}
+.chip[data-gdir="gain"]{color:var(--gain);border-color:var(--gain)}
+.chip[data-gdir="gain"][aria-pressed="true"]{background:var(--gain);color:var(--paper);border-color:var(--gain)}
+/* touch, not viewport width: a coarse pointer needs a real target whether it's a
+   phone or a touch laptop at desktop width - the mouse-driven density stays untouched */
+@media (pointer:coarse){
+  .chip{display:inline-flex;align-items:center;min-height:2.75rem;padding:.5rem 1rem}
+  .infobtn,.gclose{width:2.75rem;height:2.75rem}
+}
+
+.sheet{position:relative;border:1.5px solid var(--ink-3);background:var(--paper-2);box-shadow:var(--shadow)}
+.sheet svg{display:block;width:100%;height:auto}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:11rem;height:1.4rem;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--grid-strong);border-radius:2px}
+input[type=range]::-moz-range-track{height:3px;background:var(--grid-strong);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:1.15rem;height:1.15rem;margin-top:-.53rem;
+  border-radius:50%;background:var(--paper-2);border:2px solid var(--ink)}
+input[type=range]::-moz-range-thumb{width:1.15rem;height:1.15rem;border-radius:50%;background:var(--paper-2);border:2px solid var(--ink)}
+input[type=range]:focus-visible{outline:2px solid var(--loss);outline-offset:3px}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1rem}
+.sortbar{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem;margin-bottom:.8rem;
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.panel{background:var(--paper-2);border:1.2px solid var(--grid-strong);box-shadow:var(--shadow);padding:1.3rem 1.4rem;border-radius:12px}
+.panel h3{font-size:clamp(1.4rem,2.5vw,1.75rem)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:.32rem 1rem;margin:1rem 0 0;
+  font-family:var(--f-mono);font-size:.78rem;font-variant-numeric:tabular-nums}
+.kv dt{color:var(--ink-3);letter-spacing:.03em}
+.kv dd{margin:0;text-align:right;font-weight:500}
+.kv .sep{grid-column:1/-1;height:1px;background:var(--grid-strong);margin:.45rem 0}
+/* long values (a whole citation, not a figure) read better stacked under their label */
+.kv.stack{grid-template-columns:1fr;gap:.15rem}
+.kv.stack dd{text-align:left;margin-bottom:.55rem;line-height:1.5}
+.terr{cursor:pointer}
+.terr path{transition:stroke .18s,stroke-width .18s}
+.tip{
+  position:absolute;pointer-events:none;z-index:20;opacity:0;transition:opacity .12s;
+  background:var(--ink);color:var(--paper);padding:.42rem .6rem;border-radius:3px;
+  font-family:var(--f-mono);font-size:.7rem;line-height:1.45;white-space:nowrap;
+  transform:translate(-50%,-124%);box-shadow:var(--shadow);
+}
+.tip b{font-weight:600;letter-spacing:.02em}
+
+/* ============================================================
+   REVEALS
+   ============================================================ */
+[data-reveal]{opacity:0;transform:translateY(11px) rotate(-.35deg);
+  transition:opacity .62s cubic-bezier(.22,.7,.3,1),transform .62s cubic-bezier(.22,.7,.3,1);
+  transition-delay:var(--d,0ms)}
+[data-reveal].in{opacity:1;transform:none}
+/* #flat shows everything at once - for screenshots and for design/extract.sh, which
+   runs headless where nothing ever scrolls into view */
+html.flat [data-reveal]{opacity:1;transform:none;transition:none}
+/* nothing scrolls in flat mode, so no ancestor ever gains .in - the in-chart
+   animations have to be settled here too or every bar captures empty */
+html.flat .grow{transform:none;transition:none}
+html.flat .fadein{opacity:1;transition:none}
+html.flat .draw{stroke-dashoffset:0;transition:none}
+.draw{stroke-dasharray:var(--L);stroke-dashoffset:var(--L);
+  transition:stroke-dashoffset 1.15s cubic-bezier(.3,.75,.35,1);transition-delay:var(--d,0ms)}
+.in .draw,.draw.in{stroke-dashoffset:0}
+.grow{transform:scaleY(0);transition:transform .78s cubic-bezier(.24,.78,.32,1);transition-delay:var(--d,0ms)}
+.in .grow{transform:scaleY(1)}
+.fadein{opacity:0;transition:opacity .5s ease;transition-delay:var(--d,0ms)}
+.in .fadein{opacity:1}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  [data-reveal],[data-reveal].in{opacity:1;transform:none;transition:none}
+  .draw{stroke-dashoffset:0!important;transition:none}
+  .grow{transform:none!important;transition:none}
+  .fadein{opacity:1!important;transition:none}
+}
+
+footer{padding:3.5rem 0 5rem;border-top:1.5px solid var(--grid-strong);color:var(--ink-2);font-size:.84rem}
+footer a{text-decoration-color:var(--gain)}
+
+/* ============================================================
+   MAP SURFACES  (added for the local PMTiles build)
+   ============================================================ */
+.map{position:relative;width:100%;background:var(--paper-3);
+  border:1.2px solid var(--grid-strong);box-shadow:var(--shadow);
+  border-radius:12px;overflow:hidden}
+.map .canvas{position:absolute;inset:0}
+.map.sheet-ar{aspect-ratio:1000/680;min-height:280px}
+.maplibregl-canvas{outline:none}
+.maplibregl-ctrl-attrib{font-family:var(--f-mono);font-size:11px}
+.maplibregl-ctrl-group{border-radius:2px!important}
+
+.tlabel{font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;
+  color:var(--ink-2);background:color-mix(in srgb,var(--paper) 78%,transparent);
+  padding:1px 4px;border-radius:2px;pointer-events:auto;cursor:pointer;white-space:nowrap;
+  border:1px solid transparent}
+.tlabel:hover,.tlabel[data-on="1"]{color:var(--loss);border-color:var(--loss)}
+/* on the drawer map the chosen territory is the subject; the rest are context */
+.tlabel[data-sel]{color:var(--paper);background:var(--ink);border-color:var(--ink);
+  font-weight:600;z-index:2}
+
+.mapbar{display:flex;flex-wrap:wrap;align-items:center;gap:.7rem 1rem;margin-top:.8rem}
+.mapbar label{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.yearout{font-family:var(--f-hand);font-weight:700;font-size:1.5rem;line-height:1;
+  min-width:3.4ch;color:var(--loss);font-variant-numeric:tabular-nums}
+.maploading{position:absolute;inset:0;z-index:6;display:grid;place-items:center;
+  font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-2);background:var(--paper-3);transition:opacity .35s}
+.maploading[hidden]{display:none}
+
+
+/* ============================================================
+   INFO POPOVERS  (native popover API - Esc and click-away free)
+   ============================================================ */
+.numrow{display:flex;align-items:flex-start;gap:.5rem}
+/* the hero number is huge, so its button aligns to the baseline instead */
+.numrow:has(.hero-num){align-items:flex-end;gap:.75rem}
+.numrow:has(.hero-num) .infobtn{margin-bottom:1.1rem}
+.numrow h3{margin:0}
+.infobtn{
+  flex:none;display:grid;place-items:center;cursor:pointer;
+  width:1.5rem;height:1.5rem;margin-top:.35rem;padding:0;border-radius:50%;
+  border:1.2px solid var(--grid-strong);background:var(--paper-2);color:var(--ink-3);
+  transition:color .18s,border-color .18s,transform .18s;
+}
+.infobtn svg{width:.95rem;height:.95rem;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.infobtn:hover{color:var(--loss);border-color:var(--loss);transform:translateY(-1px)}
+.infobtn:focus-visible{outline:2px solid var(--loss);outline-offset:2px}
+
+.popover{
+  max-width:min(34rem,92vw);padding:1.3rem 1.4rem;
+  border:1.4px solid var(--ink-3);border-radius:12px;
+  background:var(--paper-2);color:var(--ink);box-shadow:var(--shadow);
+}
+.popover::backdrop{background:color-mix(in srgb,var(--ink) 26%,transparent)}
+.popover h3,.popover h4{font-family:var(--f-hand);font-size:1.35rem;font-weight:700;margin:0 0 .6rem}
+.popover p{font-size:.87rem;line-height:1.6;color:var(--ink-2);margin:0 0 .7rem;max-width:none}
+.popover p:last-child{margin-bottom:0}
+/* the caveat gets the same circular "i" mark the population legend already uses for
+   "read this one with a caveat" - one signal for a caveat everywhere it appears,
+   instead of the generic side-stripe warning-box the rest of the page never reaches for */
+.warn{display:flex;gap:.6rem;align-items:flex-start;color:var(--ink-2)}
+.warn .caveat-key{margin-top:.15rem;flex:none}
+
+/* the one visible sign the boot sequence itself failed, not just one component of it */
+.dataFail{
+  margin:1.6rem 0 0;padding:.9rem 1.1rem;
+  border:1.2px solid var(--loss);border-radius:2px;
+  background:var(--loss-soft);color:var(--ink);
+  font-family:var(--f-mono);font-size:.85rem;line-height:1.5;
+}
+
+/* ============================================================
+   CHOROPLETH
+   ============================================================ */
+.choroscale{
+  position:absolute;left:.7rem;bottom:.7rem;z-index:5;display:flex;align-items:center;
+  gap:.4rem;padding:.4rem .55rem;border-radius:3px;pointer-events:none;
+  background:color-mix(in srgb,var(--paper) 88%,transparent);
+  border:1px solid var(--grid-strong);
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.06em;color:var(--ink-2);
+}
+.choroscale i{display:block;width:1.5rem;height:.62rem;border:1px solid var(--grid-strong)}
+.sortbar{align-items:center}
+
+/* ============================================================
+   DATA-QUALITY BAR  (in the headline popover)
+   ============================================================ */
+.qbar{display:flex;height:.7rem;border:1px solid var(--grid-strong);margin:.9rem 0 .5rem}
+.qbar span{display:block}
+.qkept{background:var(--ink-2)}
+.qdrop{background:repeating-linear-gradient(-45deg,
+  var(--grid-strong) 0 3px, transparent 3px 6px)}
+.qkv{margin:.2rem 0 .9rem}
+
+/* the year, legible over satellite imagery */
+.yearbox{
+  position:absolute;left:.8rem;bottom:.8rem;z-index:5;pointer-events:none;
+  display:flex;flex-direction:column;gap:.1rem;padding:.5rem .8rem .55rem;
+  border-radius:2px;border:1.2px solid var(--ink);
+  background:color-mix(in srgb,var(--paper) 90%,transparent);
+  box-shadow:var(--shadow);backdrop-filter:blur(3px);
+}
+.yb-year{
+  font-family:var(--f-hand);font-weight:700;line-height:1;color:var(--ink);
+  font-size:clamp(1.7rem,3.6vw,2.5rem);font-variant-numeric:tabular-nums;
+}
+.yb-place{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-2);
+}
+
+/* ============================================================
+   p05  country filter panel
+   ============================================================ */
+.panelsub{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin:1.3rem 0 .5rem;font-weight:500;
+}
+.hotlist{margin:0;padding-left:1.1rem;font-size:.83rem;color:var(--ink-2);line-height:1.5}
+.hotlist li{margin-bottom:.3rem}
+.hotlist b{color:var(--ink);font-weight:600}
+.hotlist .rate{font-family:var(--f-mono);color:var(--loss);font-size:.78rem}
+
+/* ============================================================
+   p04  PATTERNS OF MOVEMENT
+   The glyphs are real SVGs drawn from shorelines_annual, pulled in as a CSS
+   mask so they take the page's ink instead of the file's own black - which
+   also means one cached request per file and no inline markup in the page.
+   ============================================================ */
+.glyphgrid{
+  display:grid;gap:.5rem;margin-top:1.4rem;
+  grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+}
+@media (min-width:820px){.glyphgrid{grid-template-columns:repeat(10,minmax(0,1fr))}}
+
+/* the same tiles, a single row of them, beside a country's band */
+.bandglyphs{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}
+.bandglyphs .gtile{width:5.2rem;flex:none}
+
+/* the real coast the method is explained on */
+.estreal{
+  display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;
+  border-radius:12px;border:1.2px solid var(--grid-strong);background:var(--paper);
+}
+
+.gtile{
+  position:relative;display:block;padding:0;cursor:pointer;overflow:hidden;
+  border-radius:12px;border:1.2px solid var(--grid-strong);background:var(--paper-2);
+  color:var(--loss);aspect-ratio:1;
+  transition:transform .2s cubic-bezier(.2,.8,.3,1),border-color .2s,box-shadow .2s;
+}
+/* direction is carried by the ink, so both kinds can share one grid */
+.gtile[data-kind="gain"]{color:var(--gain)}
+.gt-art{position:absolute;inset:6%;display:block}
+.gt-art svg{display:block;width:100%;height:100%}
+/* the source strokes are hairlines meant for a much larger frame; CSS beats the
+   presentation attribute, so the weight is lifted here and the year fade left alone */
+.gt-art path{stroke:currentColor;stroke-width:1}
+.gt-lab{
+  position:absolute;left:0;right:0;bottom:0;padding:.14rem .22rem;
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:0;
+  color:var(--ink-3);background:color-mix(in srgb,var(--paper-2) 84%,transparent);
+  display:flex;justify-content:space-between;gap:.2rem;
+  opacity:0;transition:opacity .18s;
+}
+.gt-lab b{color:var(--ink-2);font-weight:600}
+.gtile:hover,.gtile:focus-visible{
+  transform:translateY(-2px);border-color:currentColor;box-shadow:var(--shadow);
+}
+.gtile:hover .gt-lab,.gtile:focus-visible .gt-lab{opacity:1}
+.gtile:focus-visible{outline:2px solid var(--loss);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.gtile{transition:none}.gtile:hover{transform:none}}
+
+/* the card that grows out of a tile */
+.gsheet{
+  width:min(1100px,94vw);max-height:92vh;height:auto;padding:0;overflow:auto;
+  border:1.4px solid var(--ink-3);border-radius:14px;
+  background:var(--paper);color:var(--ink);box-shadow:var(--shadow);
+}
+.gsheet::backdrop{background:color-mix(in srgb,var(--ink) 42%,transparent)}
+.gsheet-in{padding:1.5rem clamp(1.1rem,3vw,2rem) 1.8rem}
+.gsheet-head{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;padding-right:2.4rem}
+.gsheet-kind{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);
+}
+.gsheet-head h3{font-size:clamp(1.75rem,3.1vw,2.2rem);margin:.15rem 0 .1rem}
+.gsheet-sub{font-family:var(--f-mono);font-size:.74rem;color:var(--ink-2)}
+.gsheet-body{display:grid;gap:clamp(1.2rem,3vw,2rem);grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:860px){.gsheet-body{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);align-items:start}}
+.gsheet-map{aspect-ratio:4/3;min-height:240px;border-radius:12px;overflow:hidden}
+/* the glyph rides beside the name at the size of the type, not as a panel of its own */
+.gsheet-glyph{
+  /* percentage padding resolves against the containing block, not this box - at 5% the
+     flex row's width swallowed the tile and left the svg 0x0 */
+  flex:none;width:5rem;aspect-ratio:1;color:var(--loss);
+  border:1.2px solid var(--grid-strong);border-radius:10px;
+  background:var(--paper-2);padding:5px;
+}
+.gsheet-glyph svg{display:block;width:100%;height:100%}
+/* at thumbnail size the year fade is not legible, so the mark is drawn solid */
+.gsheet-glyph path{stroke:currentColor;stroke-width:4;stroke-opacity:1}
+.gsheet-glyph[data-kind="gain"]{color:var(--gain)}
+.gsheet-wiki{margin-top:1rem;border-top:1px solid var(--grid-strong);padding-top:.8rem}
+.gsheet-wiki h4{font-family:var(--f-hand);font-size:1.05rem;margin:0 0 .35rem}
+.gsheet-wiki p{font-size:.8rem;line-height:1.55;color:var(--ink-2);margin:0 0 .6rem}
+.gclose{
+  position:absolute;top:.7rem;right:.7rem;z-index:5;cursor:pointer;
+  width:2rem;height:2rem;border-radius:50%;line-height:1;font-size:1.2rem;
+  border:1.2px solid var(--grid-strong);background:var(--paper);color:var(--ink-2);
+}
+.gclose:hover{color:var(--loss);border-color:var(--loss)}
+.gclose:focus-visible{outline:2px solid var(--loss);outline-offset:2px}
+
+/* ============================================================
+   p05  the drawer: the waterfall and the histogram, side by side below the map
+   ============================================================ */
+.drawertop{display:grid;gap:clamp(1.4rem,3vw,2.4rem);grid-template-columns:minmax(0,1fr)}
+@media (min-width:1000px){
+  .drawertop{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch}
+}
+#mapChoro .tlabel{font-size:11px;padding:0 3px;letter-spacing:.02em}
+#mapChoro .tlabel:not([data-sel]){opacity:.6}
+#mapChoro .tlabel:not([data-sel]):hover{opacity:1}
+
+/* the reset control earns a word; an icon alone was not obvious */
+.maplibregl-ctrl button.reset-ctrl{
+  display:flex;align-items:center;justify-content:center;gap:.3rem;
+  width:auto;padding:0 .5rem;min-width:29px;
+}
+.reset-ctrl .reset-label{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+}
+@media (max-width:620px){ .reset-ctrl .reset-label{display:none} }
+
+/* population ramp key, shown with the layer */
+.popkey{display:flex;align-items:center;gap:.6rem;margin-top:.6rem;flex-wrap:wrap}
+.popkey[hidden]{display:none}
+.pk-label{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3)}
+.pk-ramp{display:flex;align-items:center;gap:0}
+.pk-ramp i{display:block;width:1.5rem;height:.62rem;border:1px solid var(--grid-strong);
+  border-right:0}
+.pk-ramp i:last-of-type{border-right:1px solid var(--grid-strong)}
+.pk-ramp b{font-family:var(--f-mono);font-size:.7rem;font-weight:500;color:var(--ink-3);
+  margin:0 .3rem 0 .18rem}
+
+/* a source link that sits inside its card instead of trailing out of it */
+.srclink{
+  display:flex;align-items:center;gap:.6rem;margin-top:.9rem;padding:.6rem .7rem;
+  border:1.2px solid var(--grid-strong);border-radius:2px;background:var(--paper);
+  text-decoration:none;color:var(--ink);transition:border-color .18s,transform .18s;
+}
+.srclink:hover{border-color:var(--loss);transform:translateY(-1px)}
+.srclink:focus-visible{outline:2px solid var(--loss);outline-offset:2px}
+.srclink-t{font-size:.83rem;font-weight:600;line-height:1.2}
+.srclink-d{font-family:var(--f-mono);font-size:.7rem;color:var(--ink-3);margin-left:auto}
+.srclink svg{width:.9rem;height:.9rem;flex:none;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--ink-3)}
+.srclink:hover svg{color:var(--loss)}
+
+/* ---------- p.01 histogram: palette picker + the typewriter comparison ---------- */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.figh{font-family:var(--f-hand);font-size:1.18rem;font-weight:600;margin:0}
+.palrow{display:flex;align-items:center;gap:.9rem;margin:.85rem 0 0;flex-wrap:wrap}
+.palk{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3)}
+.palpick{display:flex;gap:.5rem;flex-wrap:wrap}
+.palpick button{display:flex;align-items:center;gap:.5rem;font:inherit;font-size:.74rem;
+  color:var(--ink-2);background:var(--paper-2);border:1.2px solid var(--grid-strong);
+  padding:.3rem .6rem;cursor:pointer;border-radius:2px}
+.palpick button:hover{border-color:var(--ink-3)}
+.palpick button[aria-pressed="true"]{background:var(--ink);color:var(--paper);
+  border-color:var(--ink)}
+.palpick .pal{display:flex;height:12px;border:1px solid rgba(0,0,0,.22)}
+.palpick .pal i{width:9px;height:100%;display:block}
+
+.typer .tw-caret{display:inline-block;width:.55ch;margin-left:.06em;
+  border-bottom:.11em solid var(--loss);animation:tw-blink 1.06s step-end infinite}
+.typer .tw-swap{color:var(--loss)}
+@keyframes tw-blink{0%,100%{opacity:1}50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.typer .tw-caret{animation:none;opacity:.5}}
+
+/* ============================================================
+   TYPE SET  (the woodcut weight - the fonts themselves are already in :root above)
+   ============================================================ */
+h1,h2{
+  font-variation-settings:"opsz" 96,"wdth" 90;
+  font-weight:800;letter-spacing:-.025em;
+}
+.hero-num{font-variation-settings:"opsz" 96,"wdth" 90}
+/* !important: beats the inline transform:rotate(-.5deg) on the one .hand paragraph */
+.hand{transform:none!important}
+
+/* ============================================================
+   BATCH: hero credit, histogram caption, per-country registers
+   ============================================================ */
+/* the photograph earns a line of its own, out of the way of the title */
+.hero-credit{
+  position:absolute;right:var(--gutter);bottom:1.4rem;z-index:2;margin:0;
+  max-width:164ch;text-align:right;text-shadow:0 1px 12px rgba(30,14,8,.8);
+  font-family:var(--f-mono);font-size:.7rem;line-height:1.5;letter-spacing:.02em;
+  color:#D8CBB6;
+}
+.hero-credit .num{color:#EDE4D5}
+@media (max-width:720px){.hero-credit{position:static;text-align:left;max-width:none;
+  margin:1.6rem var(--gutter) 0;text-shadow:none}}
+
+/* a caption that belongs to a full-width chart takes the chart's width */
+figcaption.histwide{max-width:none;margin-top:1rem}
+
+/* the country's own stretches sit under the map, filling the left column */
+.ownpatterns{margin-top:clamp(1.4rem,3vw,2rem);border-top:1.2px solid var(--grid-strong);
+  padding-top:1.1rem}
+.ownpatterns h3{margin-bottom:.5rem}
+.ownpatterns .bandglyphs .gtile{width:4.4rem}

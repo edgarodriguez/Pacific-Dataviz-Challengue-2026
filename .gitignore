@@ -1,0 +1,33 @@
+# OS junk
+.DS_Store
+
+# Claude Code / assistant-internal files
+.claude/
+.impeccable.md
+CLAUDE.md
+
+# Retired/old versions, pipeline intermediates - not needed to run or replicate
+archive/
+output/
+Movement/
+STORY_POPULATION_EXPOSURE.md
+
+# Raw pipeline inputs - large, publicly available from their original sources,
+# not redistributed here (see README for where to get them)
+data/dep_ls_coastlines_*.gpkg
+data/worldpop/
+data/osm/
+data/satellite/
+data/wikipedia/
+data/frames/
+data/reference/
+
+# Pipeline-output pmtiles archives: the coastline one is served from a GitHub
+# Release instead of git history (>100MB); the population ones actually used by
+# the app are copied into app/data/ instead (Vercel only deploys the app/ subtree).
+# pac_population_1km.pmtiles is a derived output the app never fetches - not shipped.
+data/*.pmtiles
+
+# app/data files confirmed unused by app/v3.js
+app/data/territories.parquet
+app/data/transects.parquet
